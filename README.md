@@ -1,0 +1,1 @@
+Mobile application for sensing BLE beacons and measuring proximity.
