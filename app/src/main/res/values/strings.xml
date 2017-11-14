@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MobileApp</string>
+    <string name="dalog_no_bt_message">Failed to enable Bluetooth service!</string>
+    <string name="dalog_no_bt_title">The application will be closed.</string>
+</resources>

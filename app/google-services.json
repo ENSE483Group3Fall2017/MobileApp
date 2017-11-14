@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "25739182968",
+    "firebase_url": "https://ense483group3fall2017mobileapp.firebaseio.com",
+    "project_id": "ense483group3fall2017mobileapp",
+    "storage_bucket": "ense483group3fall2017mobileapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:25739182968:android:d69abf88685c8986",
+        "android_client_info": {
+          "package_name": "ca.uofr.ense483group3fall2017.mobileapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "25739182968-djjjhhl786ul92ptp84r6luo6039m1ke.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ca.uofr.ense483group3fall2017.mobileapp",
+            "certificate_hash": "5300eb3863c84d4e445645f1410067ce2d5d3c75"
+          }
+        },
+        {
+          "client_id": "25739182968-qdfb62h4ng6kifuq63usd1in99hc97q7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAd7m1AxkZ6zStherVJSsK3D8ki93NQIQ8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "25739182968-qdfb62h4ng6kifuq63usd1in99hc97q7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
