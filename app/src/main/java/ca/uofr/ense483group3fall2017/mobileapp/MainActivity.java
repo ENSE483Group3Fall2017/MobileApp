@@ -173,9 +173,12 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     private BeaconInfo[] mapBeaconInfos(Collection<Beacon> collection) {
         ArrayList<BeaconInfo> foundBeacons = new ArrayList<>();
         for (Beacon b : collection) {
+            int major = Integer.parseInt(b.getId2().toString());
+            int minor = Integer.parseInt(b.getId3().toString());
+            String beaconId = String.format("%1$05d-%2$05d", major, minor);
             foundBeacons.add(new BeaconInfo(
               b.getId1().toString(),
-              b.getId2().toString(),
+              beaconId,
               b.getDistance()
             ));
         }
@@ -200,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             writeLog("Region: {"+ b.getRegionId() + "}");
             writeLog("Beacon: {"+ b.getBeaonId() + "}");
             writeLog("Proximity: {"+ b.getProximityAsString() + "}");
+            writeLog("");
         }
     }
 }
