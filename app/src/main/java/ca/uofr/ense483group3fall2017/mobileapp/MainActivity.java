@@ -8,13 +8,19 @@ import android.content.Intent;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.TextView;
 
+import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.MonitorNotifier;
+import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+import ca.uofr.ense483group3fall2017.mobileapp.dto.BeaconInfo;
 
 public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
@@ -22,6 +28,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     protected static final String TAG = "MonitoringActivity";
 
+    private final Region BECAON_REGION = new Region("ca.uofr.ense483group3fall2017.region", null,null, null);
+
+    private boolean isBeaconRangingStarted = false;
     private BeaconManager mBeaconManager;
     private TextView mMonitoringLog;
 
@@ -76,31 +85,44 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mBeaconManager.removeAllRangeNotifiers();
+        mBeaconManager.removeAllMonitorNotifiers();
+        try {
+            mBeaconManager.stopRangingBeaconsInRegion(BECAON_REGION);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        try {
+            mBeaconManager.stopMonitoringBeaconsInRegion(BECAON_REGION);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
         mBeaconManager.unbind(this);
     }
 
     @Override
     public void onBeaconServiceConnect() {
         writeLog("onBeaconServiceConnect called...");
+        registerBeaconMonitorNotifier();
+        startBeaconMonitoringForRegion(BECAON_REGION);
+    }
+
+    private void startBeaconMonitoringForRegion(Region region) {
+        try {
+            mBeaconManager.startMonitoringBeaconsInRegion(region);
+        } catch (RemoteException e) {
+            writeLog(e.getMessage());
+        }
+    }
+
+    private void registerBeaconMonitorNotifier() {
         mBeaconManager.addMonitorNotifier(new MonitorNotifier() {
             @Override
             public void didEnterRegion(Region region) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        writeLog( "I just saw an beacon for the first time!");
-                    }
-                });
             }
 
             @Override
             public void didExitRegion(Region region) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        writeLog("I no longer see an beacon");
-                    }
-                });
             }
 
             @Override
@@ -109,19 +131,75 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                     @Override
                     public void run() {
                         writeLog("I have just switched from seeing/not seeing beacons: "+ state);
+
+                        switch (state) {
+                            case 1:
+                                startBeaconRanging();
+                                break;
+                            case 0:
+                                stopBeaconRanging();
+                                break;
+                        }
                     }
                 });
             }
         });
+    }
+
+    public void startBeaconRanging() {
+        if (isBeaconRangingStarted) return;
+        isBeaconRangingStarted = true;
+
+        mBeaconManager.addRangeNotifier(
+            new RangeNotifier() {
+                @Override
+                public void didRangeBeaconsInRegion(Collection<Beacon> collection, Region region) {
+                    final BeaconInfo[] beacons = mapBeaconInfos(collection);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() { logBeacons(beacons); }
+                    });
+                }
+            }
+        );
 
         try {
-            mBeaconManager.startMonitoringBeaconsInRegion(new Region("myMonitoringUniqueId", null, null, null));
+            mBeaconManager.startRangingBeaconsInRegion(BECAON_REGION);
         } catch (RemoteException e) {
-            writeLog(e.getMessage());
+            e.printStackTrace();
         }
     }
 
+    private BeaconInfo[] mapBeaconInfos(Collection<Beacon> collection) {
+        ArrayList<BeaconInfo> foundBeacons = new ArrayList<>();
+        for (Beacon b : collection) {
+            foundBeacons.add(new BeaconInfo(
+              b.getId1().toString(),
+              b.getId2().toString(),
+              b.getDistance()
+            ));
+        }
+        BeaconInfo[] beacons = new BeaconInfo[foundBeacons.size()];
+        foundBeacons.toArray(beacons);
+        return  beacons;
+    }
+
+    public void stopBeaconRanging() {
+        if (!isBeaconRangingStarted);
+        isBeaconRangingStarted = false;
+
+        mBeaconManager.removeAllRangeNotifiers();
+    }
+
     private void writeLog(String msg) {
-        mMonitoringLog.append(msg + "\n \n");
+        mMonitoringLog.append(msg + "\n");
+    }
+
+    private void logBeacons(BeaconInfo[] beacons) {
+        for (BeaconInfo b : beacons) {
+            writeLog("Region: {"+ b.getRegionId() + "}");
+            writeLog("Beacon: {"+ b.getBeaonId() + "}");
+            writeLog("Proximity: {"+ b.getProximityAsString() + "}");
+        }
     }
 }
