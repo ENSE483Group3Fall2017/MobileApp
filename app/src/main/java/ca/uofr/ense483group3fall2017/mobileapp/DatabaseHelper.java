@@ -31,22 +31,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("create table " + Table_NAME + " (entry_id INTEGER PRIMARY KEY AUTOINCREMENT ,device_found VARCHAR(255) distance FLOAT, DateTime DATETIME ,location TEXT)");
+        db.execSQL("create table " + TABLE_NAME + " (entry_id INTEGER PRIMARY KEY AUTOINCREMENT ,device_found VARCHAR(255), distance FLOAT, DateTime DATETIME ,location TEXT)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + Table_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         onCreate(db);
     }
 
-    public boolean insertData(String status){
+    public boolean insertData(String device_found, float distance, String DateTime, String location){
         SQLiteDatabase db = this.getWritableDatabase(); //connect database
         ContentValues contentValues = new ContentValues();
-        contentValues.put(COL_2, status);
+        contentValues.put(COL2_NAME, device_found);
+        contentValues.put(COL3_NAME, distance);
+        contentValues.put(COL4_NAME, DateTime);
+        contentValues.put(COL5_NAME, location);
 
         long result;
-        result = db.insert(Table_NAME, null, contentValues);
+        result = db.insert(TABLE_NAME, null, contentValues);
         if(result == -1){
             return false;
         }else{
@@ -56,18 +59,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Cursor getAllData(){
         SQLiteDatabase db = this.getWritableDatabase();
-        Cursor res = db.rawQuery("SELECT * FROM " + Table_NAME, null); //output data from database
+        Cursor res = db.rawQuery("SELECT * FROM " + TABLE_NAME, null); //output data from database
         // this Cursor provide random read-write access to the result set returned
         return res;
     }
 
-    public boolean updateData(Editable statu, Editable id){
+    public boolean updateData(Editable entry_id, Editable device_found, Editable distance, Editable DateTime, Editable location){
         SQLiteDatabase db = this.getWritableDatabase(); //connect database
         ContentValues contentValues = new ContentValues();
-        contentValues.put(COL_1, id.toString());
-        contentValues.put(COL_2, String.valueOf(statu));
+        contentValues.put(COL1_NAME, entry_id.toString());
+        contentValues.put(COL2_NAME, String.valueOf(device_found));
+        contentValues.put(COL3_NAME, String.valueOf(distance));
+        contentValues.put(COL4_NAME, String.valueOf(DateTime));
+        contentValues.put(COL5_NAME, String.valueOf(location));
 
-        db.update(Table_NAME, contentValues, "id = ?", new String[] {String.valueOf(id)});
+        db.update(TABLE_NAME, contentValues, "id = ?", new String[] {String.valueOf(entry_id)});
 
         return true;
 
@@ -75,7 +81,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Integer deleteData(String id){
         SQLiteDatabase db = this.getWritableDatabase(); //connect database
-        return db.delete(Table_NAME, "id = ?", new String[] {id});
+        return db.delete(TABLE_NAME, "id = ?", new String[] {id});
     }
 
 }

@@ -206,4 +206,9 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             writeLog("");
         }
     }
+
+
+
+
+
 }
