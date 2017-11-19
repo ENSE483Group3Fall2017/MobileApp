@@ -1,5 +1,6 @@
 package ca.uofr.ense483group3fall2017.mobileapp;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -16,6 +17,23 @@ import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
 
 import java.util.ArrayList;
@@ -35,11 +53,15 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     private BeaconManager mBeaconManager;
     private TextView mMonitoringLog;
 
+    private LocationManager locationManager;
+    private LocationListener listener;
+    private TextView t;
+
+    @SuppressLint("ServiceCast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mMonitoringLog = findViewById(R.id.tv_monitoring_log);
 
         enableBluetoothOnStart();
 
@@ -48,8 +70,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
 
         //Getting Location
-        locationManager = (locationManager) getSystemService(LOCATION_SERVICE);
-        locationListener = new LocationListener(){
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        listener = new LocationListener(){
         @Override
         public void onLocationChanged(Location location) {
             t.append("\n " + location.getLongitude() + " " + location.getLatitude());
@@ -93,8 +115,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                 requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.INTERNET}
                         ,10);
             }
-            return;
-        }
+            return;}}
+
     private void enableBluetoothOnStart() {
         if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
             Intent enableBluetoothIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -243,7 +265,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             writeLog("Proximity: {"+ b.getProximityAsString() + "}");
             writeLog("");
             // now also including GPS locations
-            writeLog( locationManager.requestLocationUpdates("gps", 5000, 0, listener));
+            //writeLog( locationManager.requestLocationUpdates("gps", 5000, 0, listener));
+            locationManager.requestLocationUpdates("gps", 5000, 0, listener);
         }
     }
 }
