@@ -5,10 +5,13 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -208,6 +211,84 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     }
 
 
+
+
+    //Three Listener Update & Insert & Delete & Select need to be fixed
+    //The red part need to change to the button name, myDb is the to call the database function
+    public void UpdateDate(){
+        update.setOnClickListener(
+                new View.OnClickListener(){
+                    public void onClick(View v){
+                        boolean isUpdate = myDb.updateData(editStatus.getText(), editTextId.getText());
+                        if(isUpdate == true){
+                            Toast.makeText(MainActivity.this, "Data Updated", Toast.LENGTH_LONG).show();
+                        }else{
+                            Toast.makeText(MainActivity.this, "Data Not Updated", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                }
+        );
+    }
+
+    public void AddData(){
+        btnAddData.setOnClickListener(
+                new View.OnClickListener(){
+                    public void onClick(View v){
+                        boolean isInserted = myDb.insertData(editStatus.getText().toString());
+                        if(isInserted == true)
+                            Toast.makeText(MainActivity.this, "Data Inserted", Toast.LENGTH_LONG).show();
+                        else
+                            Toast.makeText(MainActivity.this, "Data Not Inserted", Toast.LENGTH_LONG).show();
+                    }
+                }
+        );
+    }
+
+    public void DeleteData(){
+        delete.setOnClickListener(
+                new View.OnClickListener(){
+                    public void onClick(View v){
+                        Integer deletedRows = myDb.deleteData(editTextId.getText().toString());
+                        if(deletedRows > 0)
+                            Toast.makeText(MainActivity.this, "Data Deleted", Toast.LENGTH_LONG).show();
+                        else
+                            Toast.makeText(MainActivity.this, "Data Not Deleted", Toast.LENGTH_LONG).show();
+                    }
+                }
+        );
+    }
+
+    public void ViewAll(){
+        viewAll.setOnClickListener(
+                new View.OnClickListener(){
+                    public void onClick(View v){
+                        Cursor res = myDb.getAllData();
+                        if(res.getColumnCount() == 0){
+                            //show message
+                            showMessage("Error", "Northing");
+                            return;
+                        }
+                        StringBuffer buffer = new StringBuffer();
+                        while(res.moveToNext()){
+                            buffer.append("Id: " + res.getString(0)+"\n");
+                            buffer.append("Status: " + res.getString(1)+"\n\n");
+                        }
+                        //show all data
+                        showMessage("Data", buffer.toString());
+                    }
+                }
+        );
+    }
+
+    public void showMessage(String title, String message){
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.show();
+    }
+
+    //End of Three Listener Update & Insert & Delete & Select need to be fixed
 
 
 
