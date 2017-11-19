@@ -5,13 +5,10 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -19,6 +16,7 @@ import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,6 +45,34 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
         mBeaconManager = BeaconManager.getInstanceForApplication(this);
         mBeaconManager.bind(this);
+
+
+        //Getting Location
+        locationManager = (locationManager) getSystemService(LOCATION_SERVICE);
+        locationListener = new LocationListener(){
+        @Override
+        public void onLocationChanged(Location location) {
+            t.append("\n " + location.getLongitude() + " " + location.getLatitude());
+        }
+
+        @Override
+        public void onStatusChanged(String s, int i, Bundle bundle) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String s) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String s) {
+
+            Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            //startActivity(i);
+        }
+    };
+        configure_button();
     }
 
     @Override
@@ -60,6 +86,15 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         }
     }
 
+    void configure_button(){
+        // first check for permissions
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.INTERNET}
+                        ,10);
+            }
+            return;
+        }
     private void enableBluetoothOnStart() {
         if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
             Intent enableBluetoothIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -207,89 +242,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             writeLog("Beacon: {"+ b.getBeaonId() + "}");
             writeLog("Proximity: {"+ b.getProximityAsString() + "}");
             writeLog("");
+            // now also including GPS locations
+            writeLog( locationManager.requestLocationUpdates("gps", 5000, 0, listener));
         }
     }
-
-
-
-
-    //Three Listener Update & Insert & Delete & Select need to be fixed
-    //The red part need to change to the button name, myDb is the to call the database function
-    public void UpdateDate(){
-        update.setOnClickListener(
-                new View.OnClickListener(){
-                    public void onClick(View v){
-                        boolean isUpdate = myDb.updateData(editStatus.getText(), editTextId.getText());
-                        if(isUpdate == true){
-                            Toast.makeText(MainActivity.this, "Data Updated", Toast.LENGTH_LONG).show();
-                        }else{
-                            Toast.makeText(MainActivity.this, "Data Not Updated", Toast.LENGTH_LONG).show();
-                        }
-                    }
-                }
-        );
-    }
-
-    public void AddData(){
-        btnAddData.setOnClickListener(
-                new View.OnClickListener(){
-                    public void onClick(View v){
-                        boolean isInserted = myDb.insertData(editStatus.getText().toString());
-                        if(isInserted == true)
-                            Toast.makeText(MainActivity.this, "Data Inserted", Toast.LENGTH_LONG).show();
-                        else
-                            Toast.makeText(MainActivity.this, "Data Not Inserted", Toast.LENGTH_LONG).show();
-                    }
-                }
-        );
-    }
-
-    public void DeleteData(){
-        delete.setOnClickListener(
-                new View.OnClickListener(){
-                    public void onClick(View v){
-                        Integer deletedRows = myDb.deleteData(editTextId.getText().toString());
-                        if(deletedRows > 0)
-                            Toast.makeText(MainActivity.this, "Data Deleted", Toast.LENGTH_LONG).show();
-                        else
-                            Toast.makeText(MainActivity.this, "Data Not Deleted", Toast.LENGTH_LONG).show();
-                    }
-                }
-        );
-    }
-
-    public void ViewAll(){
-        viewAll.setOnClickListener(
-                new View.OnClickListener(){
-                    public void onClick(View v){
-                        Cursor res = myDb.getAllData();
-                        if(res.getColumnCount() == 0){
-                            //show message
-                            showMessage("Error", "Northing");
-                            return;
-                        }
-                        StringBuffer buffer = new StringBuffer();
-                        while(res.moveToNext()){
-                            buffer.append("Id: " + res.getString(0)+"\n");
-                            buffer.append("Status: " + res.getString(1)+"\n\n");
-                        }
-                        //show all data
-                        showMessage("Data", buffer.toString());
-                    }
-                }
-        );
-    }
-
-    public void showMessage(String title, String message){
-        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
-        builder.setCancelable(true);
-        builder.setTitle(title);
-        builder.setMessage(message);
-        builder.show();
-    }
-
-    //End of Three Listener Update & Insert & Delete & Select need to be fixed
-
-
-
 }
