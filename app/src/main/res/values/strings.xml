@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">MobileApp</string>
-    <string name="dalog_no_bt_message">Failed to enable Bluetooth service!</string>
-    <string name="dalog_no_bt_title">The application will be closed.</string>
+    <string name="dialog_no_bt_message">Failed to enable Bluetooth service!</string>
+    <string name="app_will_be_closed_title">The application will be closed.</string>
+    <string name="dialog_no_gps_message">Failed to enable Location (GPS) service!</string>
 </resources>

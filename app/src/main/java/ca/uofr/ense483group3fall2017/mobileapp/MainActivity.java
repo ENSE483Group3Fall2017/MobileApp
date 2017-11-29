@@ -3,12 +3,21 @@ package ca.uofr.ense483group3fall2017.mobileapp;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.RemoteException;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -19,20 +28,27 @@ import org.altbeacon.beacon.Region;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.UUID;
 
+import ca.uofr.ense483group3fall2017.mobileapp.data.TrackingDbHelper;
+import ca.uofr.ense483group3fall2017.mobileapp.data.TrackingInfoContract;
 import ca.uofr.ense483group3fall2017.mobileapp.dto.BeaconInfo;
 
 public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
-    public static final int REQUEST_ENABLE_BT = 100;
+    private static final int REQUEST_ENABLE_BT = 100;
+    private static final int REQUEST_ENABLE_GPS = 101;
 
-    protected static final String TAG = "MonitoringActivity";
+    private static final String TAG = "MonitoringActivity";
+    private final Region BEACON_REGION = new Region("ca.uofr.ense483group3fall2017.region", null,null, null);
 
-    private final Region BECAON_REGION = new Region("ca.uofr.ense483group3fall2017.region", null,null, null);
+    private FusedLocationProviderClient mFusedLocationClient;
 
     private boolean isBeaconRangingStarted = false;
     private BeaconManager mBeaconManager;
     private TextView mMonitoringLog;
+
+    private SQLiteDatabase mDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,26 +57,50 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         mMonitoringLog = findViewById(R.id.tv_monitoring_log);
 
         enableBluetoothOnStart();
-
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mBeaconManager = BeaconManager.getInstanceForApplication(this);
+
+        mDb = new TrackingDbHelper(this).getWritableDatabase();
+
         mBeaconManager.bind(this);
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case REQUEST_ENABLE_BT:
-                handleEnableBluetoothResult(resultCode);
-                break;
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
+    private void enableGpsOnStart() {
+        if(!isLocationServiceEnabled()) {
+            Intent enableGpsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivityForResult(enableGpsIntent, REQUEST_ENABLE_GPS);
         }
+    }
+
+    private void handleEnableGpsResult() {
+        if(isLocationServiceEnabled()) return;
+
+        AlertDialog.Builder noGpsDialogBuilder = new AlertDialog.Builder(this);
+        noGpsDialogBuilder
+                .setTitle(R.string.app_will_be_closed_title)
+                .setMessage(R.string.dialog_no_gps_message)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        MainActivity.this.finish();
+                    }
+                });
+
+        AlertDialog noBtDialog = noGpsDialogBuilder.create();
+        noBtDialog.show();
+    }
+
+    private boolean isLocationServiceEnabled() {
+        LocationManager manager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        return  manager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
     private void enableBluetoothOnStart() {
         if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
             Intent enableBluetoothIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBluetoothIntent, REQUEST_ENABLE_BT);
+        }
+        else {
+            enableGpsOnStart();
         }
     }
 
@@ -70,8 +110,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
         AlertDialog.Builder noBtDialogBuilder = new AlertDialog.Builder(this);
         noBtDialogBuilder
-                .setTitle(R.string.dalog_no_bt_title)
-                .setMessage(R.string.dalog_no_bt_message)
+                .setTitle(R.string.app_will_be_closed_title)
+                .setMessage(R.string.dialog_no_bt_message)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         MainActivity.this.finish();
@@ -83,17 +123,32 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     }
 
     @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_ENABLE_BT:
+                handleEnableBluetoothResult(resultCode);
+                enableGpsOnStart();
+                break;
+            case REQUEST_ENABLE_GPS:
+                handleEnableGpsResult();
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         mBeaconManager.removeAllRangeNotifiers();
         mBeaconManager.removeAllMonitorNotifiers();
         try {
-            mBeaconManager.stopRangingBeaconsInRegion(BECAON_REGION);
+            mBeaconManager.stopRangingBeaconsInRegion(BEACON_REGION);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
         try {
-            mBeaconManager.stopMonitoringBeaconsInRegion(BECAON_REGION);
+            mBeaconManager.stopMonitoringBeaconsInRegion(BEACON_REGION);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -104,7 +159,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     public void onBeaconServiceConnect() {
         writeLog("onBeaconServiceConnect called...");
         registerBeaconMonitorNotifier();
-        startBeaconMonitoringForRegion(BECAON_REGION);
+        startBeaconMonitoringForRegion(BEACON_REGION);
     }
 
     private void startBeaconMonitoringForRegion(Region region) {
@@ -164,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         );
 
         try {
-            mBeaconManager.startRangingBeaconsInRegion(BECAON_REGION);
+            mBeaconManager.startRangingBeaconsInRegion(BEACON_REGION);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -204,6 +259,15 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             writeLog("Beacon: {"+ b.getBeaonId() + "}");
             writeLog("Proximity: {"+ b.getProximityAsString() + "}");
             writeLog("");
+            saveBeaconInfo(b);
         }
+    }
+
+    private void saveBeaconInfo(BeaconInfo beaconInfo) {
+        ContentValues beaconValues = new ContentValues();
+        beaconValues.put(TrackingInfoContract._ID, UUID.randomUUID().toString());
+        beaconValues.put(TrackingInfoContract.COLUMN_BEACON_ID, beaconInfo.getBeaonId());
+        beaconValues.put(TrackingInfoContract.COLUMN_PROXIMITY, beaconInfo.getProximity());
+        mDb.insert(TrackingInfoContract.TABLE_NAME, null, beaconValues);
     }
 }
