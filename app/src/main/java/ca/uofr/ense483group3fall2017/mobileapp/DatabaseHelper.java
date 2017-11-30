@@ -21,8 +21,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL1_NAME = "entry_id";
     public static final String COL2_NAME = "device_found";
     public static final String COL3_NAME = "distance";
-    public static final String COL4_NAME = "DateTime";
-    public static final String COL5_NAME = "location";
+    //public static final String COL4_NAME = "DateTime";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, 1);
@@ -31,7 +30,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("create table " + TABLE_NAME + " (entry_id INTEGER PRIMARY KEY AUTOINCREMENT ,device_found VARCHAR(255), distance FLOAT, DateTime DATETIME ,location TEXT)");
+        db.execSQL("create table " + TABLE_NAME + " (entry_id INTEGER PRIMARY KEY AUTOINCREMENT ,device_found VARCHAR(255), distance DOUBLE)");
     }
 
     @Override
@@ -40,13 +39,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public boolean insertData(String device_found, float distance, String DateTime, String location){
+    public boolean insertData(String device_found, double distance){
         SQLiteDatabase db = this.getWritableDatabase(); //connect database
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL2_NAME, device_found);
         contentValues.put(COL3_NAME, distance);
-        contentValues.put(COL4_NAME, DateTime);
-        contentValues.put(COL5_NAME, location);
+        //contentValues.put(COL4_NAME, DateTime);
 
         long result;
         result = db.insert(TABLE_NAME, null, contentValues);
@@ -70,8 +68,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(COL1_NAME, entry_id.toString());
         contentValues.put(COL2_NAME, String.valueOf(device_found));
         contentValues.put(COL3_NAME, String.valueOf(distance));
-        contentValues.put(COL4_NAME, String.valueOf(DateTime));
-        contentValues.put(COL5_NAME, String.valueOf(location));
+        //contentValues.put(COL4_NAME, String.valueOf(DateTime));
 
         db.update(TABLE_NAME, contentValues, "id = ?", new String[] {String.valueOf(entry_id)});
 
