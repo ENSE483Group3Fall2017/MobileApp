@@ -185,7 +185,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
                     beaconId,
                     b.getDistance()
             ));
-
+            //insert Data into SQLite Database
+            mydb.insertData(beaconId, b.getDistance());
         }
         BeaconInfo[] beacons = new BeaconInfo[foundBeacons.size()];
         foundBeacons.toArray(beacons);
@@ -209,8 +210,6 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
             writeLog("Beacon: {"+ b.getBeaonId() + "}");
             writeLog("Proximity: {"+ b.getProximityAsString() + "}");
             writeLog("");
-            //insert Data into SQLite Database
-            mydb.insertData(beaconId, b.getDistance());
         }
     }
 }
