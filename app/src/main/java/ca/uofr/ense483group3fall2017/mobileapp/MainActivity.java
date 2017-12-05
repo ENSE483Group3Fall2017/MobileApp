@@ -50,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     private SQLiteDatabase mDb;
 
+    private static string serverURL = "http://messagebrokerwebapiense483group3fall2017.azurewebsites.net/api/PetTracking";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +65,26 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         mDb = new TrackingDbHelper(this).getWritableDatabase();
 
         mBeaconManager.bind(this);
+
+
+        // starting SERVER Connection
+        final RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
+        StringRequest stringRequest = new stringRequest (Request.Method.POST,serverURL,
+                new Response.Listener<String>(){
+                    @Override
+                    public void onResponse (String response){
+                        mMonitoringLog.setText(response);
+                        requestQueue.stop();
+                    }
+                }, new Response.ErrorListener(){
+            @Override
+            public void onErrorResponse(VolleyError error){
+                mMonitoringLog.setText("Error occured while sending data");
+                error.printStackTrace();
+                requestQueue.stop();
+            }
+        });
+        requestQueue.add(stringRequest);
     }
 
     private void enableGpsOnStart() {
